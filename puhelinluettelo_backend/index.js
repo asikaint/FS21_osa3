@@ -35,6 +35,19 @@ app.get('/',(req,res) => {
 app.get('/api/persons',(req,res) => {
     res.json(persons)
 })
+app.get('/api/persons/:id',(request,response)=>{
+    const personId = Number(request.params.id)
+    console.log(`täällä`);
+    const person = persons.find(person => person.id === personId)
+    if (person) {
+        response.json(person)
+    } else {
+        response.status(404).end()
+    }
+})
+    
+    
+
 
 app.get('/api/info',(req,res) => {
     const sizePersons = persons.length
