@@ -2,8 +2,6 @@ const express = require('express')
 const app = express()
 
 let persons = [
-    {
-    "persons":[
       { 
         "name": "Arto Hellas", 
         "number": "040-123456",
@@ -23,16 +21,29 @@ let persons = [
         "name": "Mary Poppendieck", 
         "number": "39-23-6423122",
         "id": 4
+      },
+      { 
+        "name": "Mary Poppendieck", 
+        "number": "39-23-6423122",
+        "id": 5
       }
     ]
-  }
-]
 
 app.get('/',(req,res) => {
     res.send(`<h1>Welcome to test site</h1>`)
 })
 app.get('/api/persons',(req,res) => {
     res.json(persons)
+})
+
+app.get('/api/info',(req,res) => {
+    const sizePersons = persons.length
+    console.log(persons.length);
+
+    res.send(`<div> 
+                <p>Phonebook has info for ${sizePersons} people</br>
+                ${new Date().toString()} </p>
+            </div>`)
 })
 
 const PORT = 3001
