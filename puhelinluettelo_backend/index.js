@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+app.use(express.json())
 
 let persons = [
       { 
@@ -36,16 +37,43 @@ app.get('/api/persons',(req,res) => {
     res.json(persons)
 })
 app.get('/api/persons/:id',(request,response)=>{
-    const personId = Number(request.params.id)
-    console.log(`täällä`);
-    const person = persons.find(person => person.id === personId)
-    if (person) {
-        response.json(person)
-    } else {
-        response.status(404).end()
-    }
+  const personId = Number(request.params.id)
+  const person = persons.find(person => person.id === personId)
+  if (person) {
+      response.json(person)
+  } else {
+      response.status(404).end()
+  }
 })
-    
+
+app.delete('/api/persons/:id',(request,response) => {
+  const personId = Number(request.params.id)
+  const person = persons.find(person => person.id === personId)
+          console.log(persons)
+          console.log(persons)
+          console.log("---------------");
+  if (person) {
+    console.log(`persons before`,persons);
+    persons = persons.filter(per => (per.id != personId))
+    console.log(`persons after filter`,persons);
+    response.status(204).end()
+  } else {
+    response.status(404).end()
+  }
+})
+
+const generateId = () => {
+  return Math.floor(Math.random() * 100);
+}
+
+app.post('/api/persons',(request,response) => {
+  const person = request.body
+  person.id = generateId()
+
+  persons.concat(person)
+  response.json(person)
+
+})
     
 
 
