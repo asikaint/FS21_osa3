@@ -45,17 +45,11 @@ app.get('/api/persons/:id',(request,response)=>{
       response.status(404).end()
   }
 })
-
 app.delete('/api/persons/:id',(request,response) => {
   const personId = Number(request.params.id)
   const person = persons.find(person => person.id === personId)
-          console.log(persons)
-          console.log(persons)
-          console.log("---------------");
   if (person) {
-    console.log(`persons before`,persons);
-    persons = persons.filter(per => (per.id != personId))
-    console.log(`persons after filter`,persons);
+    persons = persons.filter(person => (person.id != personId))
     response.status(204).end()
   } else {
     response.status(404).end()
@@ -66,13 +60,44 @@ const generateId = () => {
   return Math.floor(Math.random() * 100);
 }
 
+
 app.post('/api/persons',(request,response) => {
-  const person = request.body
-  person.id = generateId()
+  const body = request.body
 
-  persons.concat(person)
-  response.json(person)
+  // Missing information
+  if (!body.name && body.number) {
+    return response.status(400).json({
+       error: 'name missing' 
+    })
+  } 
+  if (!body.number && body.name) {
+    return response.status(400).json({
+      error: 'number missing' 
+   })
+  }
+  if (!body.name && !body.number) {
+    return response.status(400).json({
+      error: 'name and number missing'
+    })
+  }
 
+  // Return error if sane person on the phonebook already
+  if (persons.some(person => person.name === body.name)) {
+    return response.status(400).json({
+      error: 'Person already on phonebook'
+    })
+  // PUT succesfull
+  } else {
+    console.log("not yet:",persons.includes(person => (person.name === body.name)));
+    person = {
+      name: body.name,
+      number: body.number,
+      id: generateId()
+    }
+    persons=persons.concat(person)
+    console.log(persons);
+    response.json(person)
+  }
 })
     
 
