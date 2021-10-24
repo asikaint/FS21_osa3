@@ -2,6 +2,8 @@ const express = require('express')
 const morgan = require('morgan')
 const app = express()
 app.use(express.json())
+app.use(express.static('build'))
+
 // app.use(morgan('tiny'))
 
 morgan.token('bodyJSON', req => JSON.stringify(req.body || {}));
