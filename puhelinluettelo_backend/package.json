@@ -1,0 +1,21 @@
+{
+  "name": "puhelinluettelo_backend",
+  "version": "0.0.1",
+  "description": "puhelinluettelo_backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "toni asikainen",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-timestamp": "^0.1.4",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.13"
+  }
+}
