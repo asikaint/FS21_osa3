@@ -1,10 +1,12 @@
+require('dotenv').config()
+
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
+const Person = require('./models/person.js')
+
 app.use(express.json())
 app.use(express.static('build'))
-
-// app.use(morgan('tiny'))
 
 morgan.token('bodyJSON', req => JSON.stringify(req.body || {}));
 morgan.token('method', req => req.method);
@@ -48,14 +50,25 @@ let persons = [
       }
     ]
 
-app.get('/',(req,res) => {
+app.get('/',(request,response) => {
     res.send(`<h1>Welcome to test site</h1>`)
 })
-app.get('/api/persons',(req,res) => {
-    res.json(persons)
+
+app.get('/api/persons',(request,response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
+
 app.get('/api/persons/:id',(request,response)=>{
   const personId = Number(request.params.id)
+
+  console.log(personId);
+  Person.findById(personId, (err, sample) => {
+    console.log(`find: ${sample}`);
+  })
+  Person.countDocuments({id: 1}, (err, count) => { console.log(`count: ${count}`) })
+
   const person = persons.find(person => person.id === personId)
   if (person) {
       response.json(person)
@@ -63,6 +76,7 @@ app.get('/api/persons/:id',(request,response)=>{
       response.status(404).end()
   }
 })
+
 app.delete('/api/persons/:id',(request,response) => {
   const personId = Number(request.params.id)
   const person = persons.find(person => person.id === personId)
@@ -99,27 +113,25 @@ app.post('/api/persons',(request,response) => {
     })
   }
 
-  // Return error if sane person on the phonebook already
-  if (persons.some(person => person.name === body.name)) {
-    return response.status(400).json({
-      error: 'Person already on phonebook'
-    })
-  // PUT succesfull
-  } else {
-    console.log("not yet:",persons.includes(person => (person.name === body.name)));
-    person = {
+  const count = Number(Person.countDocuments({name: body.name}, (err, count) => {}))
+// console.log(`${typeof count} ${typeof 0}`);
+//   if (count>0) {
+//     console.log(`on jo`);
+//     return response.status(400).json({
+//       error: 'Person already on phonebook'
+//     })
+//   // PUT succesfull
+//   } else {
+    const person = new Person({
       name: body.name,
       number: body.number,
-      id: generateId()
-    }
-    persons=persons.concat(person)
-    console.log(persons);
-    response.json(person)
-  }
+    })
+    person.save().then(savedPerson => {
+      response.json(savedPerson)
+    })
+  //  }
 })
     
-
-
 app.get('/api/info',(req,res) => {
     const sizePersons = persons.length
     console.log(persons.length);
@@ -129,7 +141,9 @@ app.get('/api/info',(req,res) => {
                 ${new Date().toString()} </p>
             </div>`)
 })
+
 const PORT = process.env.PORT || 3001
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
