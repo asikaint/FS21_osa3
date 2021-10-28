@@ -5,8 +5,21 @@ const morgan = require('morgan')
 const app = express()
 const Person = require('./models/person.js')
 
-app.use(express.json())
 app.use(express.static('build'))
+app.use(express.json())
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError') {
+    // console.log(error)
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+  if (error.name === 'TypeError') {
+    // console.log(error)
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+  next(error)
+}
 
 morgan.token('bodyJSON', req => JSON.stringify(req.body || {}));
 morgan.token('method', req => req.method);
@@ -49,53 +62,52 @@ let persons = [
         "id": 5
       }
     ]
-
+// Valmis
 app.get('/',(request,response) => {
     res.send(`<h1>Welcome to test site</h1>`)
 })
 
+//Valmis
 app.get('/api/persons',(request,response) => {
   Person.find({}).then(persons => {
     response.json(persons)
   })
 })
 
-app.get('/api/persons/:id',(request,response)=>{
-  const personId = Number(request.params.id)
-
-  console.log(personId);
-  Person.findById(personId, (err, sample) => {
-    console.log(`find: ${sample}`);
-  })
-  Person.countDocuments({id: 1}, (err, count) => { console.log(`count: ${count}`) })
-
-  const person = persons.find(person => person.id === personId)
-  if (person) {
+//TODO
+app.get('/api/persons/:id',(request,response,next) => {
+  const personId = request.params.id
+  Person.findById(personId)
+  .then(person => {
+    if (person) {
       response.json(person)
-  } else {
+    } else {
       response.status(404).end()
-  }
+    }
+  })
+  .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id',(request,response) => {
-  const personId = Number(request.params.id)
-  const person = persons.find(person => person.id === personId)
-  if (person) {
-    persons = persons.filter(person => (person.id != personId))
-    response.status(204).end()
-  } else {
-    response.status(404).end()
-  }
+// Valmis
+app.delete('/api/persons/:id',(request,response,next) => {
+  const personId = request.params.id
+
+  Person.findByIdAndRemove(personId)
+    .then(person => {
+      if (person) {
+        console.log("Data deleted")
+        response.status(204).end()
+      } else {
+        console.log("Person not found to remove")
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
-const generateId = () => {
-  return Math.floor(Math.random() * 100);
-}
-
-
-app.post('/api/persons',(request,response) => {
+//Valmis
+app.post('/api/persons',(request,response,next) => {
   const body = request.body
-
   // Missing information
   if (!body.name && body.number) {
     return response.status(400).json({
@@ -113,37 +125,34 @@ app.post('/api/persons',(request,response) => {
     })
   }
 
-  const count = Number(Person.countDocuments({name: body.name}, (err, count) => {}))
-// console.log(`${typeof count} ${typeof 0}`);
-//   if (count>0) {
-//     console.log(`on jo`);
-//     return response.status(400).json({
-//       error: 'Person already on phonebook'
-//     })
-//   // PUT succesfull
-//   } else {
-    const person = new Person({
-      name: body.name,
-      number: body.number,
-    })
-    person.save().then(savedPerson => {
-      response.json(savedPerson)
-    })
-  //  }
+  const name = { name: body.name };
+  const number = { number: body.number };
+
+  Person.findOneAndUpdate(name, number, {
+    new: true,
+    upsert: true
+  })
+  .then(updatedPerson => {
+    response.json(updatedPerson)
+    console.log(`${name} ${number} added to phonebook`)
+  })
 })
     
+//Valmis
 app.get('/api/info',(req,res) => {
-    const sizePersons = persons.length
-    console.log(persons.length);
-
+  Person.countDocuments({}) // const sizePersons = 
+  .then(count => { 
     res.send(`<div> 
-                <p>Phonebook has info for ${sizePersons} people</br>
-                ${new Date().toString()} </p>
-            </div>`)
+      <p>Phonebook has info for ${count} people</br>
+      ${new Date().toString()} </p>
+      </div>`)
+  console.log(`count: ${count}`)
+  })
 })
 
-const PORT = process.env.PORT || 3001
+app.use(errorHandler)
 
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
