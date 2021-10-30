@@ -13,8 +13,7 @@ const errorHandler = (error, request, response, next) => {
   if (error.name === 'CastError') {
     // console.log(error)
     return response.status(400).send({ error: 'malformatted id' })
-  }
-  if (error.name === 'TypeError') {
+  } else if (error.name === 'TypeError') {
     // console.log(error)
     return response.status(400).send({ error: 'malformatted id' })
   }
@@ -35,33 +34,6 @@ app.use((req,res,next) => {
   }
 });
 
-let persons = [
-      { 
-        "name": "Arto Hellas", 
-        "number": "040-123456",
-        "id": 1
-      },
-      { 
-        "name": "Ada Lovelace", 
-        "number": "39-44-5323523",
-        "id": 2
-      },
-      { 
-        "name": "Dan Abramov", 
-        "number": "12-43-234345",
-        "id": 3
-      },
-      { 
-        "name": "Mary Poppendieck", 
-        "number": "39-23-6423122",
-        "id": 4
-      },
-      { 
-        "name": "Mary Poppendieck", 
-        "number": "39-23-6423122",
-        "id": 5
-      }
-    ]
 // Valmis
 app.get('/',(request,response) => {
     res.send(`<h1>Welcome to test site</h1>`)
@@ -125,9 +97,10 @@ app.post('/api/persons',(request,response,next) => {
     })
   }
 
-  const name = { name: body.name };
-  const number = { number: body.number };
+  const name = {name: body.name}
+  const number = {number: body.number}
 
+  // Tarpeeton nyt, kun toteutus erillisessä put
   Person.findOneAndUpdate(name, number, {
     new: true,
     upsert: true
@@ -136,6 +109,21 @@ app.post('/api/persons',(request,response,next) => {
     response.json(updatedPerson)
     console.log(`${name} ${number} added to phonebook`)
   })
+  .catch(error => next(error))
+})
+
+app.put('/api/persons',(request,response,next) => {
+  const body = request.body
+  // Missing body
+  const name = {name: body.name}
+  const number = {number: body.number}
+
+  Person.updateOne(name,number)
+  .then(updatedPerson => {
+    response.json(updatedPerson)
+    console.log(`${name} number updated ${number}`)
+  })
+  .catch(error => next(error))
 })
     
 //Valmis
