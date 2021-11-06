@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const express = require('express')
+const mongooseUniqueValidator = require('mongoose-unique-validator')
 const morgan = require('morgan')
 const app = express()
 const Person = require('./models/person.js')
@@ -11,11 +12,11 @@ app.use(express.json())
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
   if (error.name === 'CastError') {
-    // console.log(error)
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'TypeError') {
-    // console.log(error)
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(409).send(error)
   }
   next(error)
 }
@@ -46,7 +47,7 @@ app.get('/api/persons',(request,response) => {
   })
 })
 
-//TODO
+//Valmis
 app.get('/api/persons/:id',(request,response,next) => {
   const personId = request.params.id
   Person.findById(personId)
@@ -97,30 +98,43 @@ app.post('/api/persons',(request,response,next) => {
     })
   }
 
-  const name = {name: body.name}
-  const number = {number: body.number}
+  const person = Person({
+    name: body.name,
+    number: body.number,
+  })
 
-  // Tarpeeton nyt, kun toteutus erillisessä put
-  Person.findOneAndUpdate(name, number, {
-    new: true,
-    upsert: true
+  person.save()
+  .then(result => {
+    console.log(`Saved`)
+    response.json(result)
   })
-  .then(updatedPerson => {
-    response.json(updatedPerson)
-    console.log(`${name} ${number} added to phonebook`)
-  })
-  .catch(error => next(error))
+  .catch(error => next(error)) // Nimi on jo
+
+  // Person.findOneAndUpdate(name, number, {
+  //   new: true,
+  //   upsert: true
+  // })
+  // .then(updatedPerson => {
+  //   response.json(updatedPerson)
+  //   console.log(`${name} ${number} added to phonebook`)
+  // })
+  // .catch(error => next(error))
 })
 
 app.put('/api/persons',(request,response,next) => {
   const body = request.body
   // Missing body
   const name = {name: body.name}
+  console.log(`name`, name.name)
   const number = {number: body.number}
+  const id = Person.findOne({name: name})
 
   Person.updateOne(name,number)
   .then(updatedPerson => {
-    response.json(updatedPerson)
+    response.json({
+      name: name.name,
+      number: number.number
+    })
     console.log(`${name} number updated ${number}`)
   })
   .catch(error => next(error))
